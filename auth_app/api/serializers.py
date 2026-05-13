@@ -1,6 +1,7 @@
 from rest_framework import serializers
 from auth_app.models import CustomUser
 from rest_framework.authtoken.models import Token
+from django.contrib.auth import authenticate
 
 class RegistrationSerializer(serializers.ModelSerializer):
     email = serializers.EmailField(required=True)
@@ -30,6 +31,32 @@ class RegistrationSerializer(serializers.ModelSerializer):
         validated_data.pop('repeated_password')
         user = CustomUser.objects.create_user(**validated_data)
         token = Token.objects.create(user=user)
+        return {
+            'token': token.key,
+            'username': user.username,
+            'email': user.email,
+            'user_id': user.id,
+        }
+
+class LoginSerializer(serializers.Serializer):
+    username = serializers.CharField(required=True)
+    password = serializers.CharField(max_length=100, write_only=True)
+        
+    def validate(self, attrs):
+        username = attrs.get('username')
+        password = attrs.get('password')
+        
+        user = authenticate(username=username, password=password)
+        
+        if not user:
+            raise serializers.ValidationError('Invalid username or password.')
+    
+        attrs['user'] = user
+        return attrs
+        
+    def create(self, validated_data):
+        user = validated_data['user']
+        token, created = Token.objects.get_or_create(user=user)
         return {
             'token': token.key,
             'username': user.username,
