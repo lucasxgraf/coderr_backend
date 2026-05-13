@@ -3,6 +3,7 @@ from auth_app.models import CustomUser
 from rest_framework.authtoken.models import Token
 
 class RegistrationSerializer(serializers.ModelSerializer):
+    email = serializers.EmailField(required=True)
     password = serializers.CharField(max_length=100, write_only=True)
     repeated_password = serializers.CharField(max_length=100, write_only=True)
     
@@ -16,6 +17,12 @@ class RegistrationSerializer(serializers.ModelSerializer):
         
         if attrs['type'] not in [CustomUser.CUSTOMER, CustomUser.BUSINESS]:
             raise serializers.ValidationError("Invalid user type.")
+        
+        if attrs.get('email') and CustomUser.objects.filter(email=attrs['email']).exists():
+            raise serializers.ValidationError("Email already exists.")
+        
+        if len(attrs['password']) < 6:
+            raise serializers.ValidationError("Password must be at least 6 characters long.")
         
         return attrs
         

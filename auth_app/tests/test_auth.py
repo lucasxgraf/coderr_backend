@@ -15,30 +15,85 @@ class RegistrationViewTests(APITestCase):
             "repeated_password": "examplePassword",
             "type": "customer"
         }
-    
+
     def test_registration_success(self):
         url = reverse('registration')
         response = self.client.post(url, self.user_data, format='json')
-        
+
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertIn('token', response.data)
         self.assertIn('username', response.data)
         self.assertIn('email', response.data)
         self.assertIn('user_id', response.data)
+        self.assertIsInstance(response.data['user_id'], int)
+        self.assertIsInstance(response.data['token'], str)
+        self.assertEqual(CustomUser.objects.count(), 1)
+        
+    def test_registration_empty_fields(self):
+        url = reverse('registration')
+        empty_fields = ['username', 'email', 'password', 'repeated_password', 'type']
+
+        for field in empty_fields:
+            with self.subTest(field=field):
+                self.user_data[field] = ''
+                response = self.client.post(url, self.user_data, format='json')
+                self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+                self.assertEqual(CustomUser.objects.count(), 0)
+
+    def test_registration_password_mismatch(self):
+        url = reverse('registration')
+        self.user_data['repeated_password'] = 'differentPassword'
+
+        response = self.client.post(url, self.user_data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(CustomUser.objects.count(), 0)
+    
+    def test_registration_password_too_short(self):
+        url = reverse('registration')
+        self.user_data['password'] = '123'
+        self.user_data['repeated_password'] = '123'
+
+        response = self.client.post(url, self.user_data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(CustomUser.objects.count(), 0)
+
+    def test_registration_invalid_type(self):
+        url = reverse('registration')
+        self.user_data['type'] = 'invalid_type'
+
+        response = self.client.post(url, self.user_data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(CustomUser.objects.count(), 0)
+
+    def test_registration_duplicate_username(self):
+        url = reverse('registration')
+        self.client.post(url, self.user_data, format='json')
+
+        response = self.client.post(url, self.user_data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(CustomUser.objects.count(), 1)
 
-    # def test_registration_password_mismatch(self):
-    #     pass
-    
-    # def test_registration_invalid_type(self):
-    #     pass
-    
-    # def test_registration_duplicate_username(self):
-    #     pass
-    
-    # def test_registration_duplicate_email(self):
-    #     pass
-    
-    # def test_registration_missing_fields(self):
-    #     pass
-    
+    def test_registration_duplicate_email(self):
+        url = reverse('registration')
+        self.client.post(url, self.user_data, format='json')
+        self.user_data['username'] = 'differentUsername'
+
+        response = self.client.post(url, self.user_data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(CustomUser.objects.count(), 1)
+
+    def test_registration_invalid_email(self):
+        url = reverse('registration')
+        self.user_data['email'] = 'invalid_email'
+
+        response = self.client.post(url, self.user_data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(CustomUser.objects.count(), 0)
+
+    def test_registration_missing_fields(self):
+        url = reverse('registration')
+        self.user_data.pop('email')
+
+        response = self.client.post(url, self.user_data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(CustomUser.objects.count(), 0)
