@@ -20,6 +20,11 @@ def create_test_users():
     )
     return business_user, customer_user
 
+def assert_profile_fields(response_data, is_business=False):
+    for field in ['location', 'tel', 'description', 'working_hours']:
+        if is_business or field not in ['working_hours', 'description']:
+            assert field in response_data
+            assert isinstance(response_data[field], str)
 class ProfileBusinessListTests(APITestCase):
     def setUp(self):
         self.business_user, self.customer_user = create_test_users()
@@ -65,3 +70,73 @@ class ProfileCustomerListTests(APITestCase):
         self.client.credentials()
         response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        
+class SingleProfileTests(APITestCase):
+    def setUp(self):
+        self.business_user, self.customer_user = create_test_users()
+
+        token, _ = Token.objects.get_or_create(user=self.business_user)
+        self.client.credentials(HTTP_AUTHORIZATION='Token ' + token.key)
+        
+    def test_single_business_profile(self):
+        url = reverse('profile-detail', kwargs={'pk': self.business_user.id})
+        response = self.client.get(url)
+        
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        profile_data = response.data
+        
+        expected_fields = [
+            'user', 
+            'username', 
+            'first_name', 
+            'last_name', 
+            'file',
+            'uploaded_at', 
+            'location', 
+            'tel', 
+            'description', 
+            'working_hours', 
+            'type',
+            'email',
+            'created_at',
+        ]
+        for field in expected_fields:
+            self.assertIn(field, profile_data)
+    
+    def test_single_customer_profile(self):
+        url = reverse('profile-detail', kwargs={'pk': self.customer_user.id})
+        response = self.client.get(url)
+        
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        profile_data = response.data
+        
+        expected_fields = [
+            'user', 
+            'username', 
+            'first_name', 
+            'last_name', 
+            'file',
+            'uploaded_at',
+            'type',
+            'email',
+            'created_at'
+        ]
+        for field in expected_fields:
+            self.assertIn(field, profile_data)
+    
+    def test_profile_not_found(self):
+        url = reverse('profile-detail', kwargs={'pk': 9999})
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        
+    def test_profile_fields_never_null_business(self):
+        url = reverse('profile-detail', kwargs={'pk': self.business_user.id})
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        assert_profile_fields(response.data, is_business=True)
+
+    def test_profile_fields_never_null_customer(self):
+        url = reverse('profile-detail', kwargs={'pk': self.customer_user.id})
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        assert_profile_fields(response.data, is_business=False)

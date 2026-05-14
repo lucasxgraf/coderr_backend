@@ -16,6 +16,7 @@ class CustomUser(AbstractUser):
     description = models.TextField(max_length=255, blank=True, default="")
     working_hours = models.CharField(max_length=100, blank=True, default="")
     file = models.FileField(upload_to='uploads/', null=True, blank=True)
+    uploaded_at = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     
     def __str__(self):

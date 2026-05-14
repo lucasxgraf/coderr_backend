@@ -20,3 +20,19 @@ class ProfileCustomerView(APIView):
         users = CustomUser.objects.filter(type='customer')
         serializer = ProfileCustomerSerializer(users, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
+    
+class ProfileDetailView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, pk):
+        try:
+            user = CustomUser.objects.get(pk=pk)
+        except CustomUser.DoesNotExist:
+            return Response({'detail': 'Profile not found.'}, status=status.HTTP_404_NOT_FOUND)
+
+        if user.type == 'business':
+            serializer = ProfileBusinessSerializer(user)
+        else:
+            serializer = ProfileCustomerSerializer(user)
+
+        return Response(serializer.data, status=status.HTTP_200_OK)

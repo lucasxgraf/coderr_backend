@@ -10,12 +10,15 @@ class ProfileBusinessSerializer(serializers.ModelSerializer):
             'username', 
             'first_name', 
             'last_name', 
-            'file', 
+            'file',
+            'uploaded_at',
             'location', 
             'tel', 
             'description', 
             'working_hours', 
             'type',
+            'email',
+            'created_at'
         ]
 
 class ProfileCustomerSerializer(serializers.ModelSerializer):
@@ -27,7 +30,9 @@ class ProfileCustomerSerializer(serializers.ModelSerializer):
             'username', 
             'first_name', 
             'last_name', 
-            'file', 
-            'created_at',
+            'file',
+            'uploaded_at',
             'type',
+            'email',
+            'created_at'
         ]
