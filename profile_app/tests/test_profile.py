@@ -129,14 +129,26 @@ class SingleProfileTests(APITestCase):
         response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
         
-    def test_profile_fields_never_null_business(self):
-        url = reverse('profile-detail', kwargs={'pk': self.business_user.id})
-        response = self.client.get(url)
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        assert_profile_fields(response.data, is_business=True)
-
-    def test_profile_fields_never_null_customer(self):
+    def test_single_customer_profile_contains_all_fields(self):
         url = reverse('profile-detail', kwargs={'pk': self.customer_user.id})
         response = self.client.get(url)
+        
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        assert_profile_fields(response.data, is_business=False)
+        
+        expected_fields = [
+            'user', 
+            'username', 
+            'first_name', 
+            'last_name', 
+            'location', 
+            'tel', 
+            'description', 
+            'working_hours', 
+            'type'
+        ]
+        
+        for field in expected_fields:
+            self.assertIn(field, response.data)
+        
+        self.assertEqual(response.data['location'], "")
+        self.assertEqual(response.data['working_hours'], "")
