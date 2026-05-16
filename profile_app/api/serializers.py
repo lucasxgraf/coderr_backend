@@ -1,6 +1,8 @@
+from django.utils.timezone import now
 from rest_framework import serializers
-from auth_app.models import CustomUser
 
+from auth_app.models import CustomUser
+       
 class ProfileDetailSerializer(serializers.ModelSerializer):
     user = serializers.IntegerField(source='id', read_only=True)
     class Meta:
@@ -38,3 +40,10 @@ class ProfileDetailSerializer(serializers.ModelSerializer):
                 data[field] = ""
                 
         return data
+    
+    def update(self, instance, validated_data):
+        if 'file' in validated_data:
+            instance.uploaded_at = now()
+        
+        return super().update(instance, validated_data)
+    

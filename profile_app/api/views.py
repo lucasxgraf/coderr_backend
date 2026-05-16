@@ -1,9 +1,11 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
-from .serializers import ProfileDetailSerializer
 from rest_framework.permissions import IsAuthenticated
+
+from .serializers import ProfileDetailSerializer
 from auth_app.models import CustomUser
+from .permissions import IsOwner
 
 class ProfileBusinessView(APIView):
     permission_classes = [IsAuthenticated]
@@ -22,8 +24,7 @@ class ProfileCustomerView(APIView):
         return Response(serializer.data, status=status.HTTP_200_OK)
     
 class ProfileDetailView(APIView):
-    permission_classes = [IsAuthenticated]
-    serializer_class = ProfileDetailSerializer
+    permission_classes = [IsAuthenticated, IsOwner]
 
     def get(self, request, pk):
         try:
@@ -31,5 +32,20 @@ class ProfileDetailView(APIView):
         except CustomUser.DoesNotExist:
             return Response({'detail': 'Profile not found.'}, status=status.HTTP_404_NOT_FOUND)
 
-        serializer = self.serializer_class(user)
+        serializer = ProfileDetailSerializer(user)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+    
+    def patch(self, request, pk):
+        try:
+            user = CustomUser.objects.get(pk=pk)
+        except CustomUser.DoesNotExist:
+            return Response({'detail': 'Profile not found.'}, status=status.HTTP_404_NOT_FOUND)
+
+        self.check_object_permissions(request, user)
+        
+        serializer = ProfileDetailSerializer(user, data=request.data, partial=True)
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        
+        serializer.save()
         return Response(serializer.data, status=status.HTTP_200_OK)
