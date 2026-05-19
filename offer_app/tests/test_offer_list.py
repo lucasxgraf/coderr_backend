@@ -259,3 +259,8 @@ class OfferPaginationTests(APITestCase):
         
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.data['results']), 2)
+        
+
+
+
+#TODO: Copy's erstellen? Für jeden Test?

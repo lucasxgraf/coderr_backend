@@ -6,6 +6,7 @@ from django.db.models import Q, Min
 
 from .serializers import OfferSerializer
 from offer_app.models import Offer
+from auth_app.models import CustomUser
 
 class OfferPagination(PageNumberPagination):
     page_size_query_param = 'page_size'
@@ -58,4 +59,17 @@ class OfferListView(APIView):
         serializer = OfferSerializer(paginated_offers, many=True, context={'request': request})
         
         return paginator.get_paginated_response(serializer.data)
-
+    
+    def post(self, request):
+        if not request.user.is_authenticated:
+            return Response({'detail': 'Unauthorized. Please log in'}, status=status.HTTP_401_UNAUTHORIZED)
+        
+        if request.user.type != 'business':
+            return Response({'detail': 'Forbidden. You have no permissions.'}, status=status.HTTP_403_FORBIDDEN)
+        
+        serializer = OfferSerializer(data=request.data, context={'request': request})
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        
+        serializer.save(user=request.user)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)

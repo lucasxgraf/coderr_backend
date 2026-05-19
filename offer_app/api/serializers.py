@@ -6,14 +6,21 @@ class OfferDetailSerializer(serializers.ModelSerializer):
         model = OfferDetail
         fields = [
             'id',
-            'url'
-        ]
+            'url',
+            'title',
+            'revisions',
+            'delivery_time_in_days',
+            'price',
+            'features',
+            'offer_type'
+        ]   
 
 class OfferSerializer(serializers.ModelSerializer):
-    details = OfferDetailSerializer(many=True, read_only=True)
+    details = OfferDetailSerializer(many=True)
     min_price = serializers.SerializerMethodField()
     min_delivery_time = serializers.SerializerMethodField()
     user_details = serializers.SerializerMethodField()
+    user = serializers.PrimaryKeyRelatedField(read_only=True)
     
     class Meta:
         model = Offer
@@ -49,3 +56,19 @@ class OfferSerializer(serializers.ModelSerializer):
                 'username': obj.user.username,
             }
         return None
+    
+    def validate_details(self, value):
+        if len(value) != 3:
+            raise serializers.ValidationError("Details have to be at least 3.")
+        
+        return value
+    
+    def create(self, validated_data):
+        details_data = validated_data.pop('details')
+        
+        offer = Offer.objects.create(**validated_data)
+        
+        for detail in details_data:
+            OfferDetail.objects.create(offer=offer, **detail)
+
+        return offer
