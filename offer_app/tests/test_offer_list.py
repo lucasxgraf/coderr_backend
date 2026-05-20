@@ -111,7 +111,6 @@ class OfferListTests(APITestCase):
         self.assertEqual(len(response.data['results'][0]['details']), 3)
         for detail in response.data['results'][0]['details']:
             self.assertIn('id', detail)
-            self.assertIn('url', detail)
 
 class OfferFilterTests(APITestCase):
     def setUp(self):

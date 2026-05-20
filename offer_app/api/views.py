@@ -1,12 +1,12 @@
+from rest_framework import status
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework import status
 from rest_framework.pagination import PageNumberPagination
+from rest_framework.permissions import IsAuthenticated
 from django.db.models import Q, Min
 
-from .serializers import OfferSerializer
+from .serializers import OfferSerializer, OfferSingleSerializer
 from offer_app.models import Offer
-from auth_app.models import CustomUser
 
 class OfferPagination(PageNumberPagination):
     page_size_query_param = 'page_size'
@@ -73,3 +73,15 @@ class OfferListView(APIView):
         
         serializer.save(user=request.user)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+class OfferSingleView(APIView):
+    permission_classes = [IsAuthenticated]
+    
+    def get(self, request, pk):
+        try:
+            offer = Offer.objects.get(pk=pk)
+        except Offer.DoesNotExist:
+            return Response({'detail': 'Offer not found.'}, status=status.HTTP_404_NOT_FOUND)
+        
+        serializer = OfferSingleSerializer(offer, context={'request': request})
+        return Response(serializer.data, status=status.HTTP_200_OK)

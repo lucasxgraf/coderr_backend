@@ -1,20 +1,28 @@
 from rest_framework import serializers
 from offer_app.models import Offer, OfferDetail
 class OfferDetailSerializer(serializers.ModelSerializer):
-    url = serializers.HyperlinkedIdentityField(view_name='offerdetail-single', lookup_field='pk')
     class Meta:
         model = OfferDetail
         fields = [
             'id',
-            'url',
             'title',
             'revisions',
             'delivery_time_in_days',
             'price',
             'features',
             'offer_type'
-        ]   
+        ]  
 
+class OfferDetailMinimalSerializer(serializers.ModelSerializer):
+    url = serializers.HyperlinkedIdentityField(view_name='offerdetail-single', lookup_field='pk')
+
+    class Meta:
+        model = OfferDetail
+        fields = [
+            'id',
+            'url'
+        ]
+        
 class OfferSerializer(serializers.ModelSerializer):
     details = OfferDetailSerializer(many=True)
     min_price = serializers.SerializerMethodField()
@@ -72,3 +80,6 @@ class OfferSerializer(serializers.ModelSerializer):
             OfferDetail.objects.create(offer=offer, **detail)
 
         return offer
+    
+class OfferSingleSerializer(OfferSerializer):
+    details = OfferDetailMinimalSerializer(many=True, read_only=True)

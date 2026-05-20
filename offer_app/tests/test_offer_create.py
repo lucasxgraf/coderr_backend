@@ -5,7 +5,6 @@ from rest_framework.authtoken.models import Token
 import copy
 
 from auth_app.models import CustomUser
-from offer_app.models import Offer, OfferDetail
 
 class TestOfferCreate(APITestCase):
     def setUp(self):
