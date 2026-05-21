@@ -14,7 +14,7 @@ class OfferDetailSerializer(serializers.ModelSerializer):
         ]  
 
 class OfferDetailMinimalSerializer(serializers.ModelSerializer):
-    url = serializers.HyperlinkedIdentityField(view_name='offerdetail-single', lookup_field='pk')
+    url = serializers.HyperlinkedIdentityField(view_name='offer-detail-single', lookup_field='pk')
 
     class Meta:
         model = OfferDetail
