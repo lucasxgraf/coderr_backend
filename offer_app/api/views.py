@@ -101,3 +101,13 @@ class OfferSingleView(APIView):
 
         serializer.save()
         return Response(serializer.data, status=status.HTTP_200_OK)
+
+    def delete(self, request, pk):
+        try:
+            offer = Offer.objects.get(pk=pk)
+        except Offer.DoesNotExist:
+            return Response({'detail': 'Offer not found.'}, status=status.HTTP_404_NOT_FOUND)
+
+        self.check_object_permissions(request, offer)
+        offer.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)

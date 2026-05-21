@@ -165,6 +165,55 @@ class UpdateOfferSingleTests(APITestCase):
                 'offer_type': 'premium'
             }]
         }
-        
+
         response = self.client.patch(self.url, data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+
+class DeleteOfferSingleTests(APITestCase):
+    def setUp(self):
+        self.business_user1 = CustomUser.objects.create_user(
+            username='max_business',
+            email='max@business.de',
+            password='password123',
+            type='business'
+        )
+        self.business_token1, _ = Token.objects.get_or_create(user=self.business_user1)
+
+        self.business_user2 = CustomUser.objects.create_user(
+            username='maria_business',
+            email='maria@business.de',
+            password='password123',
+            type='business'
+        )
+        self.business_token2, _ = Token.objects.get_or_create(user=self.business_user2)
+
+        self.offer = Offer.objects.create(
+            user=self.business_user1,
+            title='Test Offer',
+            description='This is a test offer.'
+        )
+
+        self.url = reverse('offer-single', kwargs={'pk': self.offer.pk})
+
+    def test_delete_offer_success(self):
+        self.client.credentials(HTTP_AUTHORIZATION='Token ' + self.business_token1.key)
+        response = self.client.delete(self.url)
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+        self.assertFalse(Offer.objects.filter(pk=self.offer.pk).exists())
+
+    def test_delete_offer_unauthenticated(self):
+        self.client.credentials()
+        response = self.client.delete(self.url)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    def test_delete_offer_forbidden(self):
+        self.client.credentials(HTTP_AUTHORIZATION='Token ' + self.business_token2.key)
+        response = self.client.delete(self.url)
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_delete_offer_not_found(self):
+        self.client.credentials(HTTP_AUTHORIZATION='Token ' + self.business_token1.key)
+        url = reverse('offer-single', kwargs={'pk': 9999})
+        response = self.client.delete(url)
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
