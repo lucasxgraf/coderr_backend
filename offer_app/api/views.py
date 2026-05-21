@@ -5,7 +5,8 @@ from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import IsAuthenticated
 from django.db.models import Q, Min
 
-from .serializers import OfferSerializer, OfferSingleSerializer
+from .serializers import OfferSerializer, OfferSingleSerializer, OfferPatchSerializer
+from .permissions import IsOfferOwner
 from offer_app.models import Offer
 
 class OfferPagination(PageNumberPagination):
@@ -75,13 +76,28 @@ class OfferListView(APIView):
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
 class OfferSingleView(APIView):
-    permission_classes = [IsAuthenticated]
-    
+    permission_classes = [IsAuthenticated, IsOfferOwner]
+
     def get(self, request, pk):
         try:
             offer = Offer.objects.get(pk=pk)
         except Offer.DoesNotExist:
             return Response({'detail': 'Offer not found.'}, status=status.HTTP_404_NOT_FOUND)
-        
+
         serializer = OfferSingleSerializer(offer, context={'request': request})
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    def patch(self, request, pk):
+        try:
+            offer = Offer.objects.get(pk=pk)
+        except Offer.DoesNotExist:
+            return Response({'detail': 'Offer not found.'}, status=status.HTTP_404_NOT_FOUND)
+
+        self.check_object_permissions(request, offer)
+
+        serializer = OfferPatchSerializer(offer, data=request.data, context={'request': request}, partial=True)
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        serializer.save()
         return Response(serializer.data, status=status.HTTP_200_OK)

@@ -83,3 +83,30 @@ class OfferSerializer(serializers.ModelSerializer):
     
 class OfferSingleSerializer(OfferSerializer):
     details = OfferDetailMinimalSerializer(many=True, read_only=True)
+
+
+class OfferPatchSerializer(OfferSerializer):
+    def validate_details(self, value):
+        for detail in value:
+            if 'offer_type' not in detail:
+                raise serializers.ValidationError("offer_type is required to identify the detail.")
+        return value
+
+    def update(self, instance, validated_data):
+        details_data = validated_data.pop('details', [])
+
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+        instance.save()
+
+        for detail_data in details_data:
+            offer_type = detail_data['offer_type']
+            try:
+                detail = instance.details.get(offer_type=offer_type)
+                for attr, value in detail_data.items():
+                    setattr(detail, attr, value)
+                detail.save()
+            except OfferDetail.DoesNotExist:
+                pass
+
+        return instance
