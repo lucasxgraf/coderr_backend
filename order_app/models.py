@@ -1,5 +1,11 @@
 from django.db import models
 
+STATUS_CHOICES = [
+    ('in_progress', 'in_progress'),
+    ('completed', 'completed'),
+    ('cancelled', 'cancelled'),
+]
+
 class Order(models.Model):
     customer_user = models.ForeignKey('auth_app.CustomUser', on_delete=models.CASCADE, related_name='customer_orders')
     business_user = models.ForeignKey('auth_app.CustomUser', on_delete=models.CASCADE, related_name='business_orders')
@@ -9,7 +15,7 @@ class Order(models.Model):
     price = models.IntegerField()
     features = models.JSONField(default=list)
     offer_type = models.CharField(max_length=100)
-    status = models.CharField(max_length=100)
+    status = models.CharField(max_length=100, choices=STATUS_CHOICES, default='in_progress')
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     

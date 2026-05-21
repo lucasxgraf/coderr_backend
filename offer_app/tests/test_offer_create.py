@@ -73,7 +73,7 @@ class TestOfferCreate(APITestCase):
         
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         
-    def test_offer_create_Unauthenticated(self):
+    def test_offer_create_unauthenticated(self):
         self.client.credentials()
         offer_payload = copy.deepcopy(self.valid_payload)
         response = self.client.post(self.url, offer_payload, format='json')
