@@ -21,3 +21,17 @@ class OrderSerializer(serializers.ModelSerializer):
             'created_at', 
             'updated_at', 
         ]
+
+class OrderPatchSerializer(serializers.ModelSerializer):
+    
+    class Meta:
+        model = Order
+        fields = [
+            'status'
+        ]
+        
+    def validate_status(self, value):
+        valid = ['in_progress', 'completed', 'cancelled']
+        if value not in valid:
+            raise serializers.ValidationError('Invalid status.')
+        return value

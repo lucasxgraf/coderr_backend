@@ -4,8 +4,8 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from django.db.models import Q
 
-from .serializers import OrderSerializer
-from .permissions import IsCustomerUser
+from .serializers import OrderSerializer, OrderPatchSerializer
+from .permissions import IsCustomerUser, IsBusinessUser
 from order_app.models import Order
 from offer_app.models import OfferDetail
 
@@ -47,3 +47,20 @@ class OrderListView(APIView):
         
         serializer = OrderSerializer(order, context={'request': request})
         return Response(serializer.data, status=status.HTTP_201_CREATED)
+    
+class OrderSingleView(APIView):
+    permission_classes = [IsAuthenticated, IsBusinessUser]
+    
+    def patch(self, request, pk):
+        try:
+            order = Order.objects.get(pk=pk)
+        except Order.DoesNotExist:
+            return Response({'detail': 'Offer not found.'}, status=status.HTTP_404_NOT_FOUND)
+
+        serializer = OrderPatchSerializer(order, data=request.data, partial=True)
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        
+        serializer.save()
+        response_serializer = OrderSerializer(order)
+        return Response(response_serializer.data, status=status.HTTP_200_OK)
