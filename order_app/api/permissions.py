@@ -7,3 +7,7 @@ class IsCustomerUser(BasePermission):
 class IsBusinessUser(BasePermission):
     def has_permission(self, request, view):
         return request.user.type == 'business'
+    
+class IsAdminUser(BasePermission):
+    def has_permission(self, request, view):
+        return request.user.is_staff

@@ -6,8 +6,17 @@ from rest_framework.authtoken.models import Token
 from auth_app.models import CustomUser
 from ..models import Order
 
-class UpdateStatusOrderSingleTest(APITestCase):
+class OrderDeleteTest(APITestCase):
     def setUp(self):
+        self.admin_user = CustomUser.objects.create_user(
+            username='matthias_admin',
+            email='matthias@badmin.de',
+            password='password123',
+            type='business',
+            is_staff=True
+        )
+        self.admin_token, _ = Token.objects.get_or_create(user=self.admin_user)
+        
         self.business_user = CustomUser.objects.create_user(
             username='max_business',
             email='max@business.de',
@@ -36,42 +45,34 @@ class UpdateStatusOrderSingleTest(APITestCase):
             status = 'in_progress',
         )
         
-        self.valid_payload = {
-            'status': 'completed'
-        }
-        
         self.url = reverse('order-single', kwargs={'pk': self.order.pk})
     
-    def test_order_patch_success(self):
-        self.client.credentials(HTTP_AUTHORIZATION='Token ' + self.business_token.key)
-
-        response = self.client.patch(self.url, self.valid_payload, format='json')
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
+    # Staff löscht existierende Order	204
+    def test_order_delete_success(self):
+        self.client.credentials(HTTP_AUTHORIZATION='Token ' + self.admin_token.key)
+        response = self.client.delete(self.url)
+        
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+        self.assertFalse(Order.objects.filter(pk=self.order.pk).exists())
     
-    def test_order_patch_invalid_status(self):
-        self.client.credentials(HTTP_AUTHORIZATION='Token ' + self.business_token.key)
-        invalid_payload = {
-            'status': 'invalid_status'
-        }
-
-        response = self.client.patch(self.url, invalid_payload, format='json')
-        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-    
-    def test_order_patch_unauthenticated(self):
+    # Nicht authentifiziert	401
+    def test_order_delete_unauthenticated(self):
         self.client.credentials()
-
-        response = self.client.patch(self.url, self.valid_payload, format='json')
+        response = self.client.delete(self.url)
+        
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
     
-    def test_order_patch_wrong_user(self):
-        self.client.credentials(HTTP_AUTHORIZATION='Token ' + self.customer_token.key)
-
-        response = self.client.patch(self.url, self.valid_payload, format='json')
+    # Authentifiziert aber kein Staff	403
+    def test_order_delete_no_admin(self):
+        self.client.credentials(HTTP_AUTHORIZATION='Token ' + self.business_token.key)
+        response = self.client.delete(self.url)
+        
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
     
-    def test_order_patch_not_found(self):
-        self.client.credentials(HTTP_AUTHORIZATION='Token ' + self.business_token.key)
+    # Order existiert nicht	404
+    def test_order_delete_not_found(self):
+        self.client.credentials(HTTP_AUTHORIZATION='Token ' + self.admin_token.key)
         url = reverse('order-single', kwargs={'pk': 9999})
-
-        response = self.client.patch(url, self.valid_payload, format='json')
+        
+        response = self.client.delete(url)
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)

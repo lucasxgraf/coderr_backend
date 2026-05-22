@@ -5,7 +5,7 @@ from rest_framework.permissions import IsAuthenticated
 from django.db.models import Q
 
 from .serializers import OrderSerializer, OrderPatchSerializer
-from .permissions import IsCustomerUser, IsBusinessUser
+from .permissions import IsCustomerUser, IsBusinessUser, IsAdminUser
 from order_app.models import Order
 from offer_app.models import OfferDetail
 
@@ -51,6 +51,13 @@ class OrderListView(APIView):
 class OrderSingleView(APIView):
     permission_classes = [IsAuthenticated, IsBusinessUser]
     
+    def get_permissions(self):
+            if self.request.method == 'PATCH':
+                return [IsAuthenticated(), IsBusinessUser()]
+            elif self.request.method == 'DELETE':
+                return [IsAuthenticated(), IsAdminUser()]
+            return [IsAuthenticated()]
+    
     def patch(self, request, pk):
         try:
             order = Order.objects.get(pk=pk)
@@ -64,3 +71,12 @@ class OrderSingleView(APIView):
         serializer.save()
         response_serializer = OrderSerializer(order)
         return Response(response_serializer.data, status=status.HTTP_200_OK)
+    
+    def delete(self, request, pk):
+        try:
+            order = Order.objects.get(pk=pk)
+        except Order.DoesNotExist:
+            return Response({'detail': 'Offer not found.'}, status=status.HTTP_404_NOT_FOUND)
+        
+        order.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
