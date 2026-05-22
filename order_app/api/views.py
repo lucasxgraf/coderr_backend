@@ -8,6 +8,7 @@ from .serializers import OrderSerializer, OrderPatchSerializer
 from .permissions import IsCustomerUser, IsBusinessUser, IsAdminUser
 from order_app.models import Order
 from offer_app.models import OfferDetail
+from auth_app.models import CustomUser
 
 class OrderListView(APIView):
     permission_classes = [IsAuthenticated]
@@ -49,8 +50,6 @@ class OrderListView(APIView):
         return Response(serializer.data, status=status.HTTP_201_CREATED)
     
 class OrderSingleView(APIView):
-    permission_classes = [IsAuthenticated, IsBusinessUser]
-    
     def get_permissions(self):
             if self.request.method == 'PATCH':
                 return [IsAuthenticated(), IsBusinessUser()]
@@ -80,3 +79,16 @@ class OrderSingleView(APIView):
         
         order.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
+    
+class OrderCountView(APIView):
+    permission_classes = [IsAuthenticated]
+    
+    def get(self, request, business_user_id):
+        try:
+            user = CustomUser.objects.get(pk=business_user_id)
+        except CustomUser.DoesNotExist:
+            return Response({'detail': 'Profile not found.'}, status=status.HTTP_404_NOT_FOUND)
+        
+        count = Order.objects.filter(business_user=user, status='in_progress').count()
+        
+        return Response({'order_count': count}, status=status.HTTP_200_OK)

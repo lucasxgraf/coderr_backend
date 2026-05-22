@@ -6,17 +6,8 @@ from rest_framework.authtoken.models import Token
 from auth_app.models import CustomUser
 from ..models import Order
 
-class OrderDeleteTest(APITestCase):
+class OrderCountTest(APITestCase):
     def setUp(self):
-        self.admin_user = CustomUser.objects.create_user(
-            username='matthias_admin',
-            email='matthias@badmin.de',
-            password='password123',
-            type='business',
-            is_staff=True
-        )
-        self.admin_token, _ = Token.objects.get_or_create(user=self.admin_user)
-        
         self.business_user = CustomUser.objects.create_user(
             username='max_business',
             email='max@business.de',
@@ -45,30 +36,24 @@ class OrderDeleteTest(APITestCase):
             status = 'in_progress',
         )
         
-        self.url = reverse('order-single', kwargs={'pk': self.order.pk})
+        self.url = reverse('order-count', kwargs={'business_user_id': self.business_user.id})
     
-    def test_order_delete_success(self):
-        self.client.credentials(HTTP_AUTHORIZATION='Token ' + self.admin_token.key)
-        response = self.client.delete(self.url)
+    def test_order_count_success(self):
+        self.client.credentials(HTTP_AUTHORIZATION='Token ' + self.business_token.key)
         
-        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
-        self.assertFalse(Order.objects.filter(pk=self.order.pk).exists())
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['order_count'], 1)
     
-    def test_order_delete_unauthenticated(self):
+    def test_order_count_unauthenticated(self):
         self.client.credentials()
-        response = self.client.delete(self.url)
         
+        response = self.client.get(self.url)
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
     
-    def test_order_delete_no_admin(self):
+    def test_order_count_business_user_not_found(self):
         self.client.credentials(HTTP_AUTHORIZATION='Token ' + self.business_token.key)
-        response = self.client.delete(self.url)
+        url = reverse('order-count', kwargs={'business_user_id': 9999})
         
-        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
-    
-    def test_order_delete_not_found(self):
-        self.client.credentials(HTTP_AUTHORIZATION='Token ' + self.admin_token.key)
-        url = reverse('order-single', kwargs={'pk': 9999})
-        
-        response = self.client.delete(url)
+        response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
