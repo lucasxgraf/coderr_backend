@@ -23,4 +23,5 @@ urlpatterns = [
     path('api/profiles/', include('profile_app.api.urls')),
     path('api/offers/', include('offer_app.api.urls')),
     path('api/orders/', include('order_app.api.urls')),
+    path('api/reviews/', include('review_app.api.urls')),
 ]
