@@ -59,7 +59,7 @@ class ReviewSingleView(APIView):
     permission_classes = [IsAuthenticated]
     
     def get_permissions(self):
-        if self.request.method == 'PATCH':
+        if self.request.method in ('PATCH', 'DELETE'):
             return [IsAuthenticated(), IsReviewerAuthor()]
         return [IsAuthenticated()]
     
@@ -77,3 +77,13 @@ class ReviewSingleView(APIView):
         
         serializer.save()
         return Response(serializer.data, status=status.HTTP_200_OK)
+    
+    def delete(self, request, pk):
+        try:
+            review = Review.objects.get(pk=pk)
+        except Review.DoesNotExist:
+            return Response({'detail': 'Review not found.'}, status=status.HTTP_404_NOT_FOUND)
+        
+        self.check_object_permissions(request, review)
+        review.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
