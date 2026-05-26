@@ -30,7 +30,7 @@ class ReviewListTest(APITestCase):
             business_user = self.business_user,
             reviewer = self.reviewer,
             rating = 4,
-            description = "Sehr professioneller Service.",
+            description = "Very professional service.",
         )
         
         self.url = reverse('review-list')

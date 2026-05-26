@@ -4,10 +4,10 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 
 from .serializers import ReviewSerializer
-from .permissions import IsCustomer
+from .permissions import IsCustomer, IsReviewerAuthor
 from review_app.models import Review
 
-class ReviewList(APIView):
+class ReviewListView(APIView):
     permission_classes = [IsAuthenticated]
     
     def get_permissions(self):
@@ -54,3 +54,26 @@ class ReviewList(APIView):
         
         serializer.save(reviewer=request.user)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
+    
+class ReviewSingleView(APIView):
+    permission_classes = [IsAuthenticated]
+    
+    def get_permissions(self):
+        if self.request.method == 'PATCH':
+            return [IsAuthenticated(), IsReviewerAuthor()]
+        return [IsAuthenticated()]
+    
+    def patch(self, request, pk):
+        try:
+            review = Review.objects.get(pk=pk)
+        except Review.DoesNotExist:
+            return Response({'detail': 'Review not found.'}, status=status.HTTP_404_NOT_FOUND)
+        
+        self.check_object_permissions(request, review)
+        
+        serializer = ReviewSerializer(review, data=request.data, context={'request': request}, partial=True)
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        
+        serializer.save()
+        return Response(serializer.data, status=status.HTTP_200_OK)
