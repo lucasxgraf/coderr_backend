@@ -4,10 +4,16 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 
 from .serializers import ReviewSerializer
+from .permissions import IsCustomer
 from review_app.models import Review
 
 class ReviewList(APIView):
     permission_classes = [IsAuthenticated]
+    
+    def get_permissions(self):
+        if self.request.method == 'POST':
+            return [IsAuthenticated(), IsCustomer()]
+        return [IsAuthenticated()]
     
     def get(self, request):
         queryset = Review.objects.all()
@@ -40,3 +46,11 @@ class ReviewList(APIView):
         
         serializer = ReviewSerializer(queryset, many=True, context={'request': request})
         return Response(serializer.data, status=status.HTTP_200_OK)
+    
+    def post(self, request):  
+        serializer = ReviewSerializer(data=request.data, context={'request': request})
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        
+        serializer.save(reviewer=request.user)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
