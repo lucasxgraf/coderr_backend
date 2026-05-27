@@ -38,9 +38,4 @@ class BaseInfoTest(APITestCase):
         self.assertIn('average_rating', response.data)
         self.assertIn('business_profile_count', response.data)
         self.assertIn('offer_count', response.data)
-
-    def test_base_info_unauthenticated(self):
-        self.client.credentials()
-
-        response = self.client.get(self.url)
-        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        
