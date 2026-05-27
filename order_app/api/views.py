@@ -1,6 +1,7 @@
 from django.db.models import Q
 
 from rest_framework import generics, mixins
+from rest_framework.exceptions import NotFound
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
@@ -37,6 +38,8 @@ class OrderListView(generics.ListCreateAPIView):
             return OfferDetail.objects.get(pk=offer_detail_id), None
         except OfferDetail.DoesNotExist:
             return None, Response({'detail': 'OfferDetail not found.'}, status=404)
+        except (ValueError, TypeError):
+            return None, Response({'detail': 'Invalid offer_detail_id.'}, status=400)
 
     def _create_order_from_detail(self, offer_detail, customer):
         """Snapshot all OfferDetail fields into a new Order so future edits don't affect it."""
@@ -65,6 +68,12 @@ class OrderSingleView(mixins.UpdateModelMixin, mixins.DestroyModelMixin, generic
     """Patch the status of an order (business only) or delete it (admin only)."""
 
     queryset = Order.objects.all()
+
+    def initial(self, request, *args, **kwargs):
+        """Raise 404 before permission checks so non-existent orders never return 403."""
+        if not Order.objects.filter(pk=kwargs.get('pk')).exists():
+            raise NotFound()
+        super().initial(request, *args, **kwargs)
 
     def get_permissions(self):
         """Business users can patch status; only admins can delete."""
