@@ -1,7 +1,7 @@
 from django.db.models import Avg
 
 from rest_framework import status
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
@@ -13,7 +13,7 @@ from review_app.models import Review
 class BaseInfoView(APIView):
     """Return platform-wide aggregate stats: review count, average rating, user count, offer count."""
 
-    permission_classes = [IsAuthenticated]
+    permission_classes = [AllowAny]
 
     def get(self, request):
         """Compute and return the current platform statistics."""
