@@ -24,74 +24,38 @@ Coderr is a freelance service marketplace. Business users can publish service of
 
 ---
 
-## API Endpoints
-
-### Auth
-
-| Method | Endpoint | Description |
-|---|---|---|
-| `POST` | `/api/registration/` | Register a new user |
-| `POST` | `/api/login/` | Login — returns token |
-
-### Profiles
-
-| Method | Endpoint | Description |
-|---|---|---|
-| `GET` / `PATCH` | `/api/profile/<id>/` | Get or update profile by ID |
-| `GET` | `/api/profiles/business/` | List all business profiles |
-| `GET` | `/api/profiles/customer/` | List all customer profiles |
-
-### Offers
-
-| Method | Endpoint | Description |
-|---|---|---|
-| `GET` / `POST` | `/api/offers/` | List all offers / create offer |
-| `GET` / `PATCH` / `DELETE` | `/api/offers/<id>/` | Offer by ID |
-| `GET` | `/api/offerdetails/<id>/` | Single offer package by ID |
-
-### Orders
-
-| Method | Endpoint | Description |
-|---|---|---|
-| `GET` / `POST` | `/api/orders/` | List orders / place order |
-| `GET` / `PATCH` / `DELETE` | `/api/orders/<id>/` | Order by ID |
-| `GET` | `/api/order-count/<business_user_id>/` | Open orders of a business user |
-| `GET` | `/api/completed-order-count/<business_user_id>/` | Completed orders of a business user |
-
-### Reviews
-
-| Method | Endpoint | Description |
-|---|---|---|
-| `GET` / `POST` | `/api/reviews/` | List all reviews / submit review |
-| `GET` / `PATCH` / `DELETE` | `/api/reviews/<id>/` | Review by ID |
-
-### Base Info
-
-| Method | Endpoint | Description |
-|---|---|---|
-| `GET` | `/api/base-info/` | Platform-wide statistics |
-
----
-
 ## Installation & Setup
 
 ```bash
 # 1. Clone the repository
-git clone https://github.com/croser93/Coderr_BackEnd.git
+git clone https://github.com/lucasxgraf/coderr_backend.git
 cd coderr_backend
+```
 
+```bash
 # 2. Create and activate a virtual environment
 python -m venv .venv
 source .venv/bin/activate      # macOS / Linux
 .venv\Scripts\activate         # Windows
+```
 
+```bash
 # 3. Install dependencies
 pip install -r requirements.txt
+```
 
-# 4. Apply database migrations
+```bash
+# 4. Create migrations for any new or changed models
+python manage.py makemigrations
+```
+
+```bash
+# 5. Apply database migrations
 python manage.py migrate
+```
 
-# 5. Start the development server
+```bash
+# 6. Start the development server
 python manage.py runserver
 ```
 
