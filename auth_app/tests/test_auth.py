@@ -5,6 +5,7 @@ from rest_framework.test import APITestCase
 
 from auth_app.models import CustomUser
 
+
 class RegistrationViewTests(APITestCase):
     def setUp(self):
         self.user_data = {
@@ -27,16 +28,23 @@ class RegistrationViewTests(APITestCase):
         self.assertIsInstance(response.data['user_id'], int)
         self.assertIsInstance(response.data['token'], str)
         self.assertEqual(CustomUser.objects.count(), 1)
-        
+
     def test_registration_empty_fields(self):
         user_data = self.user_data.copy()
-        empty_fields = ['username', 'email', 'password', 'repeated_password', 'type']
+        empty_fields = [
+            'username',
+            'email',
+            'password',
+            'repeated_password',
+            'type']
 
         for field in empty_fields:
             with self.subTest(field=field):
                 user_data[field] = ''
                 response = self.client.post(self.url, user_data, format='json')
-                self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+                self.assertEqual(
+                    response.status_code,
+                    status.HTTP_400_BAD_REQUEST)
                 self.assertEqual(CustomUser.objects.count(), 0)
 
     def test_registration_missing_fields(self):
@@ -46,7 +54,7 @@ class RegistrationViewTests(APITestCase):
         response = self.client.post(self.url, user_data, format='json')
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(CustomUser.objects.count(), 0)
-    
+
     def test_registration_password_mismatch(self):
         user_data = self.user_data.copy()
         user_data['repeated_password'] = 'differentPassword'
@@ -54,7 +62,7 @@ class RegistrationViewTests(APITestCase):
         response = self.client.post(self.url, user_data, format='json')
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(CustomUser.objects.count(), 0)
-    
+
     def test_registration_password_too_short(self):
         user_data = self.user_data.copy()
         user_data['password'] = '123'
@@ -97,6 +105,7 @@ class RegistrationViewTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(CustomUser.objects.count(), 0)
 
+
 class LoginViewTests(APITestCase):
     def setUp(self):
         self.user_data = {
@@ -108,10 +117,10 @@ class LoginViewTests(APITestCase):
             **self.user_data
         )
         self.url = reverse('login')
-    
+
     def test_login_success(self):
         token_obj, created = Token.objects.get_or_create(user=self.user)
-        
+
         response = self.client.post(self.url, self.user_data, format='json')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertIn('username', response.data)
@@ -119,35 +128,35 @@ class LoginViewTests(APITestCase):
         self.assertIn('user_id', response.data)
         self.assertIsInstance(response.data['user_id'], int)
         self.assertIsInstance(response.data['token'], str)
-   
+
     def test_login_invalid_username(self):
         user_data = self.user_data.copy()
         user_data['username'] = 'wrongUsername'
 
         response = self.client.post(self.url, user_data, format='json')
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        
+
     def test_login_invalid_password(self):
         user_data = self.user_data.copy()
         user_data['password'] = 'wrongPassword'
 
         response = self.client.post(self.url, user_data, format='json')
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        
+
     def test_login_missing_username(self):
         user_data = self.user_data.copy()
         user_data.pop('username')
 
         response = self.client.post(self.url, user_data, format='json')
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        
+
     def test_login_missing_password(self):
         user_data = self.user_data.copy()
         user_data.pop('password')
 
         response = self.client.post(self.url, user_data, format='json')
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-    
+
     def test_login_empty_credentials(self):
         user_data = self.user_data.copy()
         user_data['username'] = ""

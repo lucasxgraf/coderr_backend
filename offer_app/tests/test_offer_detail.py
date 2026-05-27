@@ -6,6 +6,7 @@ from rest_framework.authtoken.models import Token
 from auth_app.models import CustomUser
 from offer_app.models import Offer, OfferDetail
 
+
 class OfferDetailTest(APITestCase):
     def setUp(self):
         self.business_user = CustomUser.objects.create_user(
@@ -14,15 +15,16 @@ class OfferDetailTest(APITestCase):
             password='password123',
             type='business'
         )
-        self.business_token, _ = Token.objects.get_or_create(user=self.business_user)
-        
+        self.business_token, _ = Token.objects.get_or_create(
+            user=self.business_user)
+
         self.offer = Offer.objects.create(
             user=self.business_user,
             title='Test Offer',
             description='This is a test offer.'
         )
-        
-        self.offer_detail= OfferDetail.objects.create(
+
+        self.offer_detail = OfferDetail.objects.create(
             offer=self.offer,
             title='Basic Package',
             revisions=1,
@@ -32,23 +34,30 @@ class OfferDetailTest(APITestCase):
             offer_type='basic'
         )
 
-        self.url = reverse('offer-detail-single', kwargs={'pk': self.offer_detail.pk})
+        self.url = reverse(
+            'offer-detail-single',
+            kwargs={
+                'pk': self.offer_detail.pk})
 
     def test_offer_detail_success(self):
-        self.client.credentials(HTTP_AUTHORIZATION='Token ' + self.business_token.key)
-        
+        self.client.credentials(
+            HTTP_AUTHORIZATION='Token ' +
+            self.business_token.key)
+
         response = self.client.get(self.url, format='json')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-    
+
     def test_offer_detail_unauthenticated(self):
         self.client.credentials()
-        
+
         response = self.client.get(self.url, format='json')
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
-    
+
     def test_offer_detail_not_found(self):
-        self.client.credentials(HTTP_AUTHORIZATION='Token ' + self.business_token.key)
+        self.client.credentials(
+            HTTP_AUTHORIZATION='Token ' +
+            self.business_token.key)
         url = reverse('offer-detail-single', kwargs={'pk': 9999})
-        
+
         response = self.client.get(url, format='json')
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
