@@ -6,6 +6,8 @@ from auth_app.models import CustomUser
 
 @admin.register(CustomUser)
 class CustomUserAdmin(UserAdmin):
+    """Admin view for CustomUser with profile fields and type-based filtering."""
+
     list_display = ('username', 'email', 'type', 'is_staff', 'created_at')
     list_filter = ('type', 'is_staff', 'is_active')
     search_fields = ('username', 'email')
