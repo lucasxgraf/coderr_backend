@@ -1,4 +1,8 @@
 .claude/
+media/
+media */
+uploads/
+uploads */
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
