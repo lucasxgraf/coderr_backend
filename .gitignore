@@ -3,6 +3,7 @@ media/
 media */
 uploads/
 uploads */
+staticfiles/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
