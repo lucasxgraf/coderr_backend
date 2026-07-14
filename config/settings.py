@@ -24,7 +24,7 @@ SECRET_KEY = 'django-insecure-s$5kx8c(a^^p^v6lt%ksq0$g0u7nx3lalf=ol&^g00m2o6bxwa
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['api.lucasgraf.com', '87.106.218.27']
+ALLOWED_HOSTS = ['coderr-api.lucasgraf.com', '87.106.218.27']
 
 
 # Application definition
